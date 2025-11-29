@@ -6,6 +6,7 @@
   "main": "src/custom-feeds-bot.js",
   "scripts": {
     "compile": "hardhat compile",
+    "postcompile": "cp artifacts/contracts/PriceRecorder.sol/PriceRecorder.json artifacts/ && cp artifacts/contracts/PoolPriceCustomFeed.sol/PoolPriceCustomFeed.json artifacts/",
     "deploy:recorder": "hardhat run scripts/deploy-price-recorder.js --network flare",
     "deploy:feed": "hardhat run scripts/deploy-custom-feed.js --network flare",
     "enable:pool": "hardhat run scripts/enable-pool.js --network flare",
