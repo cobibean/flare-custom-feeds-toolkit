@@ -1,0 +1,42 @@
+{
+  "name": "flare-custom-feeds-toolkit",
+  "version": "1.0.0",
+  "description": "Open-source toolkit for creating FDC-verified custom price feeds from Uniswap V3 pools on Flare",
+  "type": "module",
+  "main": "src/custom-feeds-bot.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "deploy:recorder": "hardhat run scripts/deploy-price-recorder.js --network flare",
+    "deploy:feed": "hardhat run scripts/deploy-custom-feed.js --network flare",
+    "enable:pool": "hardhat run scripts/enable-pool.js --network flare",
+    "bot:start": "node src/custom-feeds-bot.js",
+    "test:record": "hardhat run scripts/test-record-price.js --network flare",
+    "test:feed": "node scripts/test-feed-read.js",
+    "clean": "rm -rf artifacts cache"
+  },
+  "keywords": [
+    "flare",
+    "fdc",
+    "ftso",
+    "custom-feed",
+    "uniswap-v3",
+    "price-oracle",
+    "attestation",
+    "blockchain"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.0",
+    "ethers": "^6.9.0"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^3.0.5",
+    "hardhat": "^2.19.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+
