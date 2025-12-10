@@ -164,25 +164,27 @@ export default function LandingPage() {
                 description: "Start the bot to record prices and submit FDC attestations",
                 video: "/vid/robot.mp4",
               },
-            ].map((item) => (
-              <Card key={item.step} className="relative overflow-hidden group hover:border-brand-500/50 transition-colors">
-                <CardContent className="pt-6">
-                  <div className="w-56 h-56 mx-auto mb-6 rounded-2xl overflow-hidden bg-brand-500/5 shadow-lg shadow-brand-500/10">
-                    <video
-                      src={item.video}
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="text-brand-500 font-mono text-sm mb-2">{item.step}</div>
-                  <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
-                  <p className="text-muted-foreground text-sm">{item.description}</p>
-                </CardContent>
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-brand-500 to-brand-400 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
-              </Card>
+            ].map((item, idx) => (
+              <Reveal key={item.step} delay={idx * 100}>
+                <Card className="relative overflow-hidden group hover:border-brand-500/50 transition-colors">
+                  <CardContent className="pt-6">
+                    <div className="w-56 h-56 mx-auto mb-6 rounded-2xl overflow-hidden bg-brand-500/5 shadow-lg shadow-brand-500/10">
+                      <video
+                        src={item.video}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="text-brand-500 font-mono text-sm mb-2">{item.step}</div>
+                    <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
+                    <p className="text-muted-foreground text-sm">{item.description}</p>
+                  </CardContent>
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-brand-500 to-brand-400 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
+                </Card>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -199,35 +201,31 @@ export default function LandingPage() {
           </p>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-2xl bg-brand-500/10 flex items-center justify-center mx-auto mb-4">
-                <Shield className="w-8 h-8 text-brand-500" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">FDC Verified</h3>
-              <p className="text-muted-foreground text-sm">
-                Every price update is cryptographically attested through Flare Data Connector
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-2xl bg-brand-500/10 flex items-center justify-center mx-auto mb-4">
-                <Clock className="w-8 h-8 text-brand-500" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Custom Intervals</h3>
-              <p className="text-muted-foreground text-sm">
-                Configure update frequency to match your protocol&apos;s needs
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-2xl bg-brand-500/10 flex items-center justify-center mx-auto mb-4">
-                <Zap className="w-8 h-8 text-brand-500" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">FTSO Compatible</h3>
-              <p className="text-muted-foreground text-sm">
-                Implements IICustomFeed for seamless integration with existing infrastructure
-              </p>
-            </div>
+            {[
+              {
+                icon: <Shield className="w-8 h-8 text-brand-500" />,
+                title: "FDC Verified",
+                copy: "Every price update is cryptographically attested through Flare Data Connector",
+              },
+              {
+                icon: <Clock className="w-8 h-8 text-brand-500" />,
+                title: "Custom Intervals",
+                copy: "Configure update frequency to match your protocol's needs",
+              },
+              {
+                icon: <Zap className="w-8 h-8 text-brand-500" />,
+                title: "FTSO Compatible",
+                copy: "Implements IICustomFeed for seamless integration with existing infrastructure",
+              },
+            ].map((feature, idx) => (
+              <Reveal key={feature.title} delay={idx * 120} className="text-center">
+                <div className="w-16 h-16 rounded-2xl bg-brand-500/10 flex items-center justify-center mx-auto mb-4">
+                  {feature.icon}
+                </div>
+                <h3 className="font-semibold text-lg mb-2">{feature.title}</h3>
+                <p className="text-muted-foreground text-sm">{feature.copy}</p>
+              </Reveal>
+            ))}
           </div>
         </div>
       </section>
@@ -242,7 +240,7 @@ export default function LandingPage() {
             Transparent pricing with real-time gas estimation in the dashboard
           </p>
 
-          <div className="max-w-md mx-auto">
+          <Reveal className="max-w-md mx-auto">
             <Card>
               <CardContent className="pt-6 space-y-4">
                 <div className="flex justify-between items-center py-3 border-b border-border">
@@ -275,13 +273,13 @@ export default function LandingPage() {
             <p className="text-center text-muted-foreground text-sm mt-4">
               * Gas costs vary with network conditions
             </p>
-          </div>
+          </Reveal>
         </div>
       </section>
 
       {/* CTA Section */}
       <section className="px-6 py-24">
-        <div className="max-w-4xl mx-auto text-center">
+        <Reveal className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-display mb-6">
             Ready to Deploy?
           </h2>
@@ -315,7 +313,7 @@ export default function LandingPage() {
               }}
             </ConnectButton.Custom>
           )}
-        </div>
+        </Reveal>
       </section>
 
       {/* Footer */}
@@ -331,7 +329,15 @@ export default function LandingPage() {
             />
           </div>
           <p className="text-muted-foreground text-sm">
-            Open source toolkit for the Flare ecosystem, built by Flare Forward
+            Open source toolkit for the Flare ecosystem, built by{' '}
+            <a
+              href="https://flareforward.com"
+              className="text-brand-500 hover:text-brand-600 transition-colors"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Flare Forward
+            </a>
           </p>
         </div>
       </footer>
