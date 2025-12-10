@@ -126,7 +126,7 @@ export default function LandingPage() {
                     asChild
                   >
                     <a
-                      href="https://github.com/your-repo/flare-custom-feeds-toolkit"
+                      href="https://github.com/cobibean/flare-custom-feeds-toolkit"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
