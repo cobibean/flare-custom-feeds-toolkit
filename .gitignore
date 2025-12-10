@@ -37,3 +37,14 @@ deployments/*.json
 # Miscellaneous
 *.tsbuildinfo
 .cache
+
+# UI Plan (internal planning document)
+UIPLAN.md
+
+# Brand kit source files (keep processed assets in frontend/public/brand/)
+brandkit/
+
+# Next.js
+frontend/.next/
+frontend/out/
+frontend/node_modules/
