@@ -20,7 +20,11 @@ export interface DbFeed {
   custom_feed_address: string;
   price_recorder_address: string;
   recorder_id: string | null;
+  token0_address: string;
+  token0_symbol: string;
   token0_decimals: number;
+  token1_address: string;
+  token1_symbol: string;
   token1_decimals: number;
   invert_price: boolean;
   deployed_at: string;
