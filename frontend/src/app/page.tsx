@@ -290,7 +290,7 @@ export default function LandingPage() {
             />
           </div>
           <p className="text-muted-foreground text-sm">
-            Open source toolkit for the Flare ecosystem
+            Open source toolkit for the Flare ecosystem, built by Flare Forward
           </p>
         </div>
       </footer>

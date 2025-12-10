@@ -27,13 +27,8 @@ import {
 } from 'lucide-react';
 import { getExplorerUrl } from '@/lib/wagmi-config';
 import type { NetworkId } from '@/lib/types';
-
-// Contract bytecode will be loaded from artifacts
-async function getContractBytecode(contractName: string): Promise<{ abi: unknown[]; bytecode: `0x${string}` }> {
-  // In production, these would be imported from compiled artifacts
-  // For now, we'll show a placeholder that explains the setup
-  throw new Error(`Contract bytecode for ${contractName} not found. Please compile contracts first.`);
-}
+import { PRICE_RECORDER_ABI, PRICE_RECORDER_BYTECODE } from '@/lib/artifacts/PriceRecorder';
+import { POOL_PRICE_CUSTOM_FEED_ABI, POOL_PRICE_CUSTOM_FEED_BYTECODE, FDC_VERIFICATION_ADDRESS } from '@/lib/artifacts/PoolPriceCustomFeed';
 
 type DeployStep = 'select' | 'configure' | 'review' | 'deploying' | 'success' | 'error';
 
@@ -101,18 +96,45 @@ export default function DeployPage() {
     setError('');
 
     try {
-      // For demo: show that contracts need to be compiled
-      toast.info('Note: Contract deployment requires compiled artifacts', {
-        description: 'Run `npx hardhat compile` in the root directory first',
+      const interval = parseInt(updateInterval) || 300;
+
+      toast.info('Deploying PriceRecorder...', {
+        description: `Update interval: ${interval}s`,
       });
 
-      // Simulating successful deploy for UI demo
-      // In production, this would deploy the actual contract
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Deploy the PriceRecorder contract
+      const hash = await walletClient.deployContract({
+        abi: PRICE_RECORDER_ABI,
+        bytecode: PRICE_RECORDER_BYTECODE,
+        args: [BigInt(interval)],
+        account: address,
+      });
 
-      // For now, show error explaining setup
-      setError('Contract bytecode not found. Please compile contracts with `npx hardhat compile` and ensure artifacts are available.');
-      setStep('error');
+      setTxHash(hash);
+      toast.info('Transaction submitted, waiting for confirmation...');
+
+      // Wait for deployment
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      
+      if (!receipt.contractAddress) {
+        throw new Error('Contract address not found in receipt');
+      }
+
+      const contractAddress = receipt.contractAddress;
+      setDeployedAddress(contractAddress);
+
+      // Save to local storage
+      addRecorder({
+        id: uuidv4(),
+        address: contractAddress as `0x${string}`,
+        network: networkId,
+        updateInterval: interval,
+        deployedAt: new Date().toISOString(),
+        deployedBy: address,
+      });
+
+      toast.success('PriceRecorder deployed successfully!');
+      setStep('success');
 
     } catch (e) {
       console.error('Deploy error:', e);
@@ -139,14 +161,67 @@ export default function DeployPage() {
     setError('');
 
     try {
-      toast.info('Note: Contract deployment requires compiled artifacts', {
-        description: 'Run `npx hardhat compile` in the root directory first',
+      const token0Dec = parseInt(manualToken0Decimals) || poolInfo?.token0Decimals || 18;
+      const token1Dec = parseInt(manualToken1Decimals) || poolInfo?.token1Decimals || 18;
+
+      toast.info('Deploying PoolPriceCustomFeed...', {
+        description: `${feedAlias} for pool ${poolAddress.slice(0, 10)}...`,
       });
 
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Deploy the PoolPriceCustomFeed contract
+      const hash = await walletClient.deployContract({
+        abi: POOL_PRICE_CUSTOM_FEED_ABI,
+        bytecode: POOL_PRICE_CUSTOM_FEED_BYTECODE,
+        args: [
+          selectedRecorder as `0x${string}`,  // _priceRecorder
+          poolAddress as `0x${string}`,        // _poolAddress
+          feedAlias,                           // _feedName
+          FDC_VERIFICATION_ADDRESS,            // _fdcVerificationAddress
+          token0Dec,                           // _token0Decimals
+          token1Dec,                           // _token1Decimals
+          invertPrice,                         // _invertPrice
+        ],
+        account: address,
+      });
 
-      setError('Contract bytecode not found. Please compile contracts with `npx hardhat compile` and ensure artifacts are available.');
-      setStep('error');
+      setTxHash(hash);
+      toast.info('Transaction submitted, waiting for confirmation...');
+
+      // Wait for deployment
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      
+      if (!receipt.contractAddress) {
+        throw new Error('Contract address not found in receipt');
+      }
+
+      const contractAddress = receipt.contractAddress;
+      setDeployedAddress(contractAddress);
+
+      // Save to local storage
+      addFeed({
+        id: uuidv4(),
+        alias: feedAlias,
+        network: networkId,
+        poolAddress: poolAddress as `0x${string}`,
+        customFeedAddress: contractAddress as `0x${string}`,
+        priceRecorderAddress: selectedRecorder as `0x${string}`,
+        token0: {
+          address: poolInfo?.token0 || '0x0000000000000000000000000000000000000000' as `0x${string}`,
+          symbol: poolInfo?.token0Symbol || 'TOKEN0',
+          decimals: token0Dec,
+        },
+        token1: {
+          address: poolInfo?.token1 || '0x0000000000000000000000000000000000000000' as `0x${string}`,
+          symbol: poolInfo?.token1Symbol || 'TOKEN1',
+          decimals: token1Dec,
+        },
+        invertPrice: invertPrice,
+        deployedAt: new Date().toISOString(),
+        deployedBy: address,
+      });
+
+      toast.success('Custom Feed deployed successfully!');
+      setStep('success');
 
     } catch (e) {
       console.error('Deploy error:', e);
