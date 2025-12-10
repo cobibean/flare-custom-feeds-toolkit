@@ -4,28 +4,40 @@ import Image from "next/image";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount } from "wagmi";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Reveal } from "@/components/ui/reveal";
 import { ArrowRight, Zap, Shield, Clock, Coins } from "lucide-react";
 
-export default function LandingPage() {
+// Separate component for search params logic (requires Suspense)
+function RedirectHandler() {
   const { isConnected } = useAccount();
   const router = useRouter();
   const searchParams = useSearchParams();
   const stayOnLanding = searchParams.get('stay') === '1';
-  const goToDashboard = () => router.push('/dashboard');
 
-  // Redirect to dashboard if connected
   useEffect(() => {
     if (isConnected && !stayOnLanding) {
       router.push('/dashboard');
     }
   }, [isConnected, router, stayOnLanding]);
 
+  return null;
+}
+
+export default function LandingPage() {
+  const { isConnected } = useAccount();
+  const router = useRouter();
+  const goToDashboard = () => router.push('/dashboard');
+
   return (
     <div className="min-h-screen bg-background">
+      {/* Handle redirect logic with Suspense */}
+      <Suspense fallback={null}>
+        <RedirectHandler />
+      </Suspense>
+
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         {/* Background gradient */}
