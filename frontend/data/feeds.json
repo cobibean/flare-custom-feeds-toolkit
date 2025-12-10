@@ -1,6 +1,44 @@
 {
   "version": "1.0.0",
-  "feeds": [],
-  "recorders": []
+  "feeds": [
+    {
+      "id": "e5d7c585-d75e-441d-bb18-906e483e57dc",
+      "alias": "WETH_FLRETH",
+      "network": "flare",
+      "poolAddress": "0xa8697b82a5e9f108296c6299859e82472340aea7",
+      "customFeedAddress": "0x962e1f653f41bf6ede9cb9e704dc0c0075b64a19",
+      "priceRecorderAddress": "0x39479bba69d43d0ffe73d63dafcebfdcbc78727a",
+      "token0": {
+        "address": "0x1502FA4be69d526124D453619276FacCab275d3D",
+        "symbol": "WETH",
+        "decimals": 18
+      },
+      "token1": {
+        "address": "0x26A1faB310bd080542DC864647d05985360B16A5",
+        "symbol": "flrETH",
+        "decimals": 18
+      },
+      "invertPrice": false,
+      "deployedAt": "2025-12-10T03:02:34.494Z",
+      "deployedBy": "0x5d92A2486042Dd4cEE0BD6B5ffd98a8C3A6EA4Fe"
+    }
+  ],
+  "recorders": [
+    {
+      "id": "8bd65b88-7869-4815-9cf1-a8985327adf0",
+      "address": "0xd0df684ef778b4b13a2307087c6265396ce80ccb",
+      "network": "coston2",
+      "updateInterval": 60,
+      "deployedAt": "2025-12-10T02:44:04.603Z",
+      "deployedBy": "0x5d92A2486042Dd4cEE0BD6B5ffd98a8C3A6EA4Fe"
+    },
+    {
+      "id": "202ba74f-051f-4d6a-a344-e36254d17eb2",
+      "address": "0x39479bba69d43d0ffe73d63dafcebfdcbc78727a",
+      "network": "flare",
+      "updateInterval": 300,
+      "deployedAt": "2025-12-10T02:52:44.258Z",
+      "deployedBy": "0x5d92A2486042Dd4cEE0BD6B5ffd98a8C3A6EA4Fe"
+    }
+  ]
 }
-

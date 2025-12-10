@@ -37,7 +37,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${satoshi.variable} ${archivoBlack.variable} font-sans antialiased`}>
         <Providers>
-          {children}
+        {children}
         </Providers>
       </body>
     </html>

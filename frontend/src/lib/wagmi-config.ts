@@ -1,6 +1,5 @@
 import { http, createConfig } from 'wagmi';
 import { 
-  getDefaultWallets,
   connectorsForWallets 
 } from '@rainbow-me/rainbowkit';
 import {
@@ -8,7 +7,6 @@ import {
   rabbyWallet,
   metaMaskWallet,
   coinbaseWallet,
-  walletConnectWallet,
 } from '@rainbow-me/rainbowkit/wallets';
 import { type Chain } from 'viem';
 
@@ -41,12 +39,13 @@ export const coston2 = {
 
 const chains = [flare, coston2] as const;
 
-// Custom wallet configuration - prioritizes injected wallets
-// Users with Rabby, MetaMask, or other browser wallets will see them first
+// Custom wallet configuration - desktop/browser wallets only
+// WalletConnect removed to avoid API key requirements for this dev tool
+// Users can add WalletConnect support by getting a free Project ID at https://cloud.walletconnect.com/
 const connectors = connectorsForWallets(
   [
     {
-      groupName: 'Installed',
+      groupName: 'Wallets',
       wallets: [
         injectedWallet,    // Detects ANY injected wallet (Rabby, Frame, etc.)
         rabbyWallet,       // Explicit Rabby support
@@ -54,16 +53,10 @@ const connectors = connectorsForWallets(
         coinbaseWallet,    // Coinbase Wallet
       ],
     },
-    {
-      groupName: 'Other',
-      wallets: [
-        walletConnectWallet, // For mobile wallets (optional)
-      ],
-    },
   ],
   {
     appName: 'Flare Custom Feeds',
-    projectId: 'placeholder', // Only needed for WalletConnect - not required for injected
+    projectId: 'flare-custom-feeds', // Required by RainbowKit but not used without WalletConnect
   }
 );
 

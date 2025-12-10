@@ -1,13 +1,16 @@
 'use client';
 
+import { useState } from 'react';
 import { Header } from '@/components/layout/header';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { useFeeds } from '@/context/feeds-context';
-import { useChainId, useReadContracts } from 'wagmi';
+import { useChainId, useReadContracts, useAccount } from 'wagmi';
 import { CUSTOM_FEED_ABI } from '@/lib/contracts';
 import { getExplorerUrl } from '@/lib/wagmi-config';
+import { useFeedUpdater, type UpdateStep } from '@/hooks/use-feed-updater';
 import { 
   Activity, 
   ExternalLink, 
@@ -15,11 +18,14 @@ import {
   RefreshCw,
   AlertCircle,
   CheckCircle2,
-  Clock
+  Clock,
+  Play,
+  X,
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import type { NetworkId, BotStatus } from '@/lib/types';
+import type { NetworkId, BotStatus, StoredFeed } from '@/lib/types';
 
 function getBotStatus(lastUpdateTimestamp: number, updateInterval: number = 300): BotStatus {
   if (!lastUpdateTimestamp) return 'unknown';
@@ -52,19 +58,27 @@ function formatPrice(value: bigint | undefined): string {
   return num.toLocaleString('en-US', { maximumFractionDigits: 6 });
 }
 
+const STEP_PROGRESS: Record<UpdateStep, number> = {
+  idle: 0,
+  checking: 5,
+  'enabling-pool': 10,
+  recording: 15,
+  'requesting-attestation': 30,
+  'waiting-finalization': 50,
+  'retrieving-proof': 80,
+  'submitting-proof': 90,
+  success: 100,
+  error: 0,
+};
+
 interface FeedCardProps {
-  feed: {
-    id: string;
-    alias: string;
-    customFeedAddress: `0x${string}`;
-    poolAddress: `0x${string}`;
-    token0: { symbol: string };
-    token1: { symbol: string };
-  };
+  feed: StoredFeed;
   chainId: number;
+  onUpdateClick: () => void;
+  isUpdating: boolean;
 }
 
-function FeedCard({ feed, chainId }: FeedCardProps) {
+function FeedCard({ feed, chainId, onUpdateClick, isUpdating }: FeedCardProps) {
   const { data, isLoading, refetch } = useReadContracts({
     contracts: [
       {
@@ -113,16 +127,16 @@ function FeedCard({ feed, chainId }: FeedCardProps) {
   };
 
   return (
-    <Card className="hover:border-brand-500/50 transition-colors">
+    <Card className="hover:border-brand-500/50 transition-colors overflow-hidden">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <CardTitle className="text-lg">{feed.alias}</CardTitle>
-            <Badge variant="outline" className="font-mono text-xs">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <CardTitle className="text-lg truncate">{feed.alias}</CardTitle>
+            <Badge variant="outline" className="font-mono text-xs mt-1">
               {feed.token0.symbol}/{feed.token1.symbol}
             </Badge>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <div className={`w-2 h-2 rounded-full ${status.color}`} />
             <span className="text-sm text-muted-foreground flex items-center gap-1">
               <StatusIcon className="w-3 h-3" />
@@ -135,7 +149,7 @@ function FeedCard({ feed, chainId }: FeedCardProps) {
         {/* Price Display */}
         <div className="p-4 rounded-lg bg-secondary/50">
           <div className="text-sm text-muted-foreground mb-1">Current Price</div>
-          <div className="text-2xl font-display">
+          <div className="text-2xl font-display truncate">
             {isLoading ? '...' : formatPrice(latestValue)}
           </div>
           <div className="text-xs text-muted-foreground mt-1">
@@ -145,30 +159,49 @@ function FeedCard({ feed, chainId }: FeedCardProps) {
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-4">
-          <div>
+          <div className="min-w-0">
             <div className="text-xs text-muted-foreground">Updates</div>
             <div className="font-semibold">{updateCount}</div>
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="text-xs text-muted-foreground">Feed ID</div>
-            <div className="font-mono text-xs truncate">{feedId || '—'}</div>
+            <div className="font-mono text-xs truncate" title={feedId}>
+              {feedId ? `${feedId.slice(0, 16)}...` : '—'}
+            </div>
           </div>
         </div>
 
+        {/* Update Button */}
+        <Button 
+          className="w-full bg-brand-500 hover:bg-brand-600"
+          onClick={onUpdateClick}
+          disabled={isUpdating}
+        >
+          {isUpdating ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Updating...
+            </>
+          ) : (
+            <>
+              <Play className="w-4 h-4 mr-2" />
+              Update Feed
+            </>
+          )}
+        </Button>
+
         {/* Actions */}
         <div className="flex items-center justify-between pt-2 border-t border-border">
-          <div className="flex gap-2">
+          <div className="flex gap-1">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => copyToClipboard(feed.customFeedAddress, 'Feed address')}
             >
-              <Copy className="w-4 h-4 mr-1" />
-              Copy
+              <Copy className="w-4 h-4" />
             </Button>
             <Button variant="ghost" size="sm" onClick={() => refetch()}>
-              <RefreshCw className="w-4 h-4 mr-1" />
-              Refresh
+              <RefreshCw className="w-4 h-4" />
             </Button>
           </div>
           <a
@@ -187,12 +220,217 @@ function FeedCard({ feed, chainId }: FeedCardProps) {
   );
 }
 
+// Integration code snippets
+function IntegrationSnippets({ feedAddress }: { feedAddress: string }) {
+  const [copied, setCopied] = useState<string | null>(null);
+
+  const copyCode = (code: string, id: string) => {
+    navigator.clipboard.writeText(code);
+    setCopied(id);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  const solidityCode = `// Solidity - Read price in your smart contract
+interface ICustomFeed {
+    function getCurrentFeed() external view returns (
+        uint256 value,
+        int8 decimals,
+        uint64 timestamp
+    );
+}
+
+ICustomFeed feed = ICustomFeed(${feedAddress});
+(uint256 price, int8 decimals, uint64 timestamp) = feed.getCurrentFeed();`;
+
+  const jsCode = `// JavaScript/TypeScript - Read with viem
+import { createPublicClient, http } from 'viem';
+import { flare } from 'viem/chains';
+
+const client = createPublicClient({ chain: flare, transport: http() });
+
+const price = await client.readContract({
+  address: '${feedAddress}',
+  abi: [{ name: 'latestValue', type: 'function', inputs: [], outputs: [{ type: 'uint256' }] }],
+  functionName: 'latestValue',
+});
+
+console.log('Price:', Number(price) / 1e6); // 6 decimals`;
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm font-medium">Integrate in your app:</p>
+      
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">Solidity</span>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-6 text-xs"
+            onClick={() => copyCode(solidityCode, 'solidity')}
+          >
+            {copied === 'solidity' ? <CheckCircle2 className="w-3 h-3 mr-1" /> : <Copy className="w-3 h-3 mr-1" />}
+            {copied === 'solidity' ? 'Copied!' : 'Copy'}
+          </Button>
+        </div>
+        <pre className="p-2 rounded bg-black/50 text-xs overflow-x-auto max-h-24 text-green-400">
+          <code>{solidityCode}</code>
+        </pre>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">JavaScript</span>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-6 text-xs"
+            onClick={() => copyCode(jsCode, 'js')}
+          >
+            {copied === 'js' ? <CheckCircle2 className="w-3 h-3 mr-1" /> : <Copy className="w-3 h-3 mr-1" />}
+            {copied === 'js' ? 'Copied!' : 'Copy'}
+          </Button>
+        </div>
+        <pre className="p-2 rounded bg-black/50 text-xs overflow-x-auto max-h-24 text-green-400">
+          <code>{jsCode}</code>
+        </pre>
+      </div>
+    </div>
+  );
+}
+
+// Update Progress Modal
+function UpdateProgressModal({
+  isOpen,
+  progress,
+  onCancel,
+  feedAddress,
+}: {
+  isOpen: boolean;
+  progress: { step: UpdateStep; message: string; elapsed?: number; error?: string; txHash?: string };
+  onCancel: () => void;
+  feedAddress?: string;
+}) {
+  if (!isOpen) return null;
+
+  const progressValue = STEP_PROGRESS[progress.step];
+  const isError = progress.step === 'error';
+  const isSuccess = progress.step === 'success';
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <Card className={`w-full ${isSuccess ? 'max-w-2xl' : 'max-w-md'}`}>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              {isSuccess ? (
+                <CheckCircle2 className="w-5 h-5 text-green-500" />
+              ) : isError ? (
+                <AlertCircle className="w-5 h-5 text-red-500" />
+              ) : (
+                <Loader2 className="w-5 h-5 animate-spin text-brand-500" />
+              )}
+              {isSuccess ? 'Feed Updated!' : isError ? 'Update Failed' : 'Updating Feed'}
+            </CardTitle>
+            {!isSuccess && !isError && (
+              <Button variant="ghost" size="icon" onClick={onCancel}>
+                <X className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {!isError && !isSuccess && (
+            <Progress value={progressValue} className="h-2" />
+          )}
+          
+          <p className={`text-sm ${isError ? 'text-red-400' : 'text-muted-foreground'}`}>
+            {progress.message}
+          </p>
+
+          {progress.elapsed !== undefined && !isSuccess && !isError && (
+            <p className="text-xs text-muted-foreground">
+              Elapsed: {progress.elapsed}s
+            </p>
+          )}
+
+          {progress.step === 'waiting-finalization' && (
+            <div className="p-3 rounded-lg bg-secondary/50 text-xs text-muted-foreground">
+              <p className="font-medium mb-1">⏱️ FDC Finalization</p>
+              <p>This typically takes 2-5 minutes. The transaction is being verified by Flare&apos;s decentralized attestation network.</p>
+            </div>
+          )}
+
+          {isSuccess && feedAddress && (
+            <div className="border-t pt-4 mt-4">
+              <IntegrationSnippets feedAddress={feedAddress} />
+            </div>
+          )}
+
+          {(isSuccess || isError) && (
+            <Button 
+              className="w-full" 
+              onClick={onCancel}
+              variant={isError ? 'destructive' : 'default'}
+            >
+              {isError ? 'Close' : 'Done'}
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export default function MonitorPage() {
-  const { feeds, isLoading, refresh } = useFeeds();
+  const { feeds, recorders, isLoading, refresh } = useFeeds();
   const chainId = useChainId();
+  const { isConnected } = useAccount();
+  const { updateFeed, progress, isUpdating, cancel } = useFeedUpdater();
+  
+  const [updatingFeedId, setUpdatingFeedId] = useState<string | null>(null);
 
   const networkId: NetworkId = chainId === 14 ? 'flare' : 'coston2';
   const networkFeeds = feeds.filter(f => f.network === networkId);
+  const networkRecorders = recorders.filter(r => r.network === networkId);
+
+  const handleUpdateFeed = async (feed: StoredFeed) => {
+    if (!isConnected) {
+      toast.error('Please connect your wallet');
+      return;
+    }
+
+    // Find the recorder for this feed
+    const recorder = networkRecorders.find(r => r.address === feed.priceRecorderAddress);
+    if (!recorder) {
+      toast.error('Price recorder not found');
+      return;
+    }
+
+    setUpdatingFeedId(feed.id);
+
+    try {
+      await updateFeed(
+        feed.priceRecorderAddress,
+        feed.poolAddress,
+        feed.customFeedAddress
+      );
+      
+      // Refresh feeds data after successful update
+      if (progress.step === 'success') {
+        refresh();
+      }
+    } catch (error) {
+      console.error('Update failed:', error);
+    }
+  };
+
+  const handleCloseModal = () => {
+    if (isUpdating) {
+      cancel();
+    }
+    setUpdatingFeedId(null);
+  };
 
   return (
     <div className="min-h-screen">
@@ -221,9 +459,15 @@ export default function MonitorPage() {
             Loading feeds...
           </div>
         ) : networkFeeds.length > 0 ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
             {networkFeeds.map((feed) => (
-              <FeedCard key={feed.id} feed={feed} chainId={chainId} />
+              <FeedCard 
+                key={feed.id} 
+                feed={feed} 
+                chainId={chainId}
+                onUpdateClick={() => handleUpdateFeed(feed)}
+                isUpdating={isUpdating && updatingFeedId === feed.id}
+              />
             ))}
           </div>
         ) : (
@@ -243,7 +487,14 @@ export default function MonitorPage() {
           </Card>
         )}
       </div>
+
+      {/* Update Progress Modal */}
+      <UpdateProgressModal
+        isOpen={updatingFeedId !== null}
+        progress={progress}
+        onCancel={handleCloseModal}
+        feedAddress={networkFeeds.find(f => f.id === updatingFeedId)?.customFeedAddress}
+      />
     </div>
   );
 }
-

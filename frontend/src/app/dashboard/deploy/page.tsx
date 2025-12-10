@@ -27,8 +27,10 @@ import {
 } from 'lucide-react';
 import { getExplorerUrl } from '@/lib/wagmi-config';
 import type { NetworkId } from '@/lib/types';
+import Link from 'next/link';
 import { PRICE_RECORDER_ABI, PRICE_RECORDER_BYTECODE } from '@/lib/artifacts/PriceRecorder';
-import { POOL_PRICE_CUSTOM_FEED_ABI, POOL_PRICE_CUSTOM_FEED_BYTECODE, FDC_VERIFICATION_ADDRESS } from '@/lib/artifacts/PoolPriceCustomFeed';
+import { POOL_PRICE_CUSTOM_FEED_ABI, POOL_PRICE_CUSTOM_FEED_BYTECODE, CONTRACT_REGISTRY, CONTRACT_REGISTRY_ABI } from '@/lib/artifacts/PoolPriceCustomFeed';
+import { getAddress } from 'viem';
 
 type DeployStep = 'select' | 'configure' | 'review' | 'deploying' | 'success' | 'error';
 
@@ -145,6 +147,19 @@ export default function DeployPage() {
     }
   };
 
+  const handleGoToFeedFromRecorder = () => {
+    if (!deployedAddress) return;
+    setStep('select');
+    setDeployType('feed');
+    setSelectedRecorder(deployedAddress);
+    setPoolAddress('');
+    setFeedAlias('');
+    setInvertPrice(false);
+    setShowAdvanced(false);
+    setManualToken0Decimals('');
+    setManualToken1Decimals('');
+  };
+
   const handleDeployFeed = async () => {
     if (!walletClient || !publicClient || !address) {
       toast.error('Wallet not connected');
@@ -164,22 +179,49 @@ export default function DeployPage() {
       const token0Dec = parseInt(manualToken0Decimals) || poolInfo?.token0Decimals || 18;
       const token1Dec = parseInt(manualToken1Decimals) || poolInfo?.token1Decimals || 18;
 
+      // Get the ContractRegistry address for the current network
+      const registryAddress = CONTRACT_REGISTRY[chainId as keyof typeof CONTRACT_REGISTRY];
+      if (!registryAddress) {
+        throw new Error(`Unsupported network (chainId: ${chainId})`);
+      }
+
+      toast.info('Fetching FdcVerification address...', {
+        description: 'Querying ContractRegistry...',
+      });
+
+      // Query the ContractRegistry to get the FdcVerification address
+      const fdcVerificationAddress = await publicClient.readContract({
+        address: registryAddress,
+        abi: CONTRACT_REGISTRY_ABI,
+        functionName: 'getContractAddressByName',
+        args: ['FdcVerification'],
+      });
+
+      if (!fdcVerificationAddress || fdcVerificationAddress === '0x0000000000000000000000000000000000000000') {
+        throw new Error('FdcVerification address not found in registry');
+      }
+
       toast.info('Deploying PoolPriceCustomFeed...', {
         description: `${feedAlias} for pool ${poolAddress.slice(0, 10)}...`,
       });
+
+      // Properly checksum all addresses
+      const checksummedRecorder = getAddress(selectedRecorder);
+      const checksummedPool = getAddress(poolAddress);
+      const checksummedFdc = getAddress(fdcVerificationAddress);
 
       // Deploy the PoolPriceCustomFeed contract
       const hash = await walletClient.deployContract({
         abi: POOL_PRICE_CUSTOM_FEED_ABI,
         bytecode: POOL_PRICE_CUSTOM_FEED_BYTECODE,
         args: [
-          selectedRecorder as `0x${string}`,  // _priceRecorder
-          poolAddress as `0x${string}`,        // _poolAddress
-          feedAlias,                           // _feedName
-          FDC_VERIFICATION_ADDRESS,            // _fdcVerificationAddress
-          token0Dec,                           // _token0Decimals
-          token1Dec,                           // _token1Decimals
-          invertPrice,                         // _invertPrice
+          checksummedRecorder,  // _priceRecorder
+          checksummedPool,      // _poolAddress
+          feedAlias,            // _feedName
+          checksummedFdc,       // _fdcVerificationAddress
+          token0Dec,            // _token0Decimals
+          token1Dec,            // _token1Decimals
+          invertPrice,          // _invertPrice
         ],
         account: address,
       });
@@ -543,9 +585,25 @@ export default function DeployPage() {
                 )}
               </div>
 
-              <Button className="mt-6" onClick={handleReset}>
-                Deploy Another
-              </Button>
+              <div className="flex flex-col items-center gap-3 mt-6">
+                {deployType === 'recorder' ? (
+                  <Button 
+                    className="w-full sm:w-auto bg-brand-500 hover:bg-brand-600"
+                    onClick={handleGoToFeedFromRecorder}
+                  >
+                    Deploy Price Feed
+                  </Button>
+                ) : (
+                  <Link href="/dashboard/monitor">
+                    <Button className="w-full sm:w-auto bg-brand-500 hover:bg-brand-600">
+                      Monitor Feed
+                    </Button>
+                  </Link>
+                )}
+                <Button className="w-full sm:w-auto" variant="outline" onClick={handleReset}>
+                  Deploy Another
+                </Button>
+              </div>
             </CardContent>
           </Card>
         )}
