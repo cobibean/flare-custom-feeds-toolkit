@@ -37,7 +37,8 @@ export const coston2 = {
   testnet: true,
 } as const satisfies Chain;
 
-const chains = [flare, coston2] as const;
+// Keep testnet definition for potential future use, but only expose mainnet in UI
+const chains = [flare] as const;
 
 // Custom wallet configuration - desktop/browser wallets only
 // WalletConnect removed to avoid API key requirements for this dev tool
@@ -66,14 +67,13 @@ export const config = createConfig({
   connectors,
   transports: {
     [flare.id]: http(),
-    [coston2.id]: http(),
   },
   ssr: true,
 });
 
 // Export for use in components
 export const supportedChains = chains;
-export type SupportedChainId = typeof flare.id | typeof coston2.id;
+export type SupportedChainId = typeof flare.id;
 
 export function getChainById(chainId: number): Chain | undefined {
   return supportedChains.find(chain => chain.id === chainId);

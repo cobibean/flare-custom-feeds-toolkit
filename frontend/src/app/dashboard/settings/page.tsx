@@ -29,7 +29,7 @@ function generateBotEnvConfig(
   const lines: string[] = [
     '# ================================================',
     '# Flare Custom Feeds Bot Configuration',
-    `# Network: ${network === 'flare' ? 'Flare Mainnet' : 'Coston2 Testnet'}`,
+    '# Network: Flare Mainnet',
     `# Generated: ${new Date().toISOString()}`,
     '# ================================================',
     '',
@@ -39,9 +39,7 @@ function generateBotEnvConfig(
       : '# DEPLOYER_PRIVATE_KEY already set',
     '',
     '# Network RPC',
-    network === 'flare'
-      ? 'FLARE_RPC_URL=https://flare-api.flare.network/ext/bc/C/rpc'
-      : 'FLARE_RPC_URL=https://coston2-api.flare.network/ext/bc/C/rpc',
+    'FLARE_RPC_URL=https://flare-api.flare.network/ext/bc/C/rpc',
     '',
   ];
   
@@ -88,7 +86,7 @@ export default function SettingsPage() {
   const { feeds, recorders } = useFeeds();
   const chainId = useChainId();
 
-  const networkId: NetworkId = chainId === 14 ? 'flare' : 'coston2';
+  const networkId: NetworkId = 'flare';
   const networkFeeds = feeds.filter(f => f.network === networkId);
   const networkRecorders = recorders.filter(r => r.network === networkId);
 
@@ -209,7 +207,7 @@ export default function SettingsPage() {
                 ) : (
                   <div className="text-center py-6 text-muted-foreground">
                     <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p>No feeds deployed on {networkId === 'flare' ? 'Mainnet' : 'Coston2'} yet.</p>
+                    <p>No feeds deployed on Mainnet yet.</p>
                   </div>
                 )}
 
@@ -316,7 +314,7 @@ export default function SettingsPage() {
                 <div className="pt-4 border-t border-border">
                   <p className="text-sm text-muted-foreground">
                     Built by{' '}
-                    <a href="https://flareforward.io" target="_blank" rel="noopener noreferrer" className="text-brand-500 hover:underline">
+                    <a href="https://flareforward.com" target="_blank" rel="noopener noreferrer" className="text-brand-500 hover:underline">
                       Flare Forward
                     </a>
                   </p>

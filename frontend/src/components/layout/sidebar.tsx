@@ -14,7 +14,6 @@ import {
   AlertTriangle 
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { NetworkSwitcher } from './network-switcher';
 
 const navItems = [
   { href: '/dashboard', label: 'Overview', icon: Home },
@@ -52,9 +51,15 @@ export function Sidebar() {
         </Link>
       </div>
 
-      {/* Network Switcher */}
-      <div className="p-4 border-b border-border">
-        <NetworkSwitcher />
+      {/* Network Info */}
+      <div className="p-4 border-b border-border space-y-1">
+        <span className="text-sm text-muted-foreground">Network</span>
+        <Badge variant="outline" className="w-full justify-center">
+          Flare Mainnet
+        </Badge>
+        <p className="text-xs text-muted-foreground">
+          Testnet UI hidden for now.
+        </p>
       </div>
 
       {/* Navigation */}
@@ -128,7 +133,7 @@ export function Sidebar() {
 
           {/* Network Badge */}
           <Badge variant="outline" className="w-full justify-center">
-            {chainId === 14 ? 'Flare Mainnet' : chainId === 114 ? 'Coston2' : `Chain ${chainId}`}
+            {chainId === 14 ? 'Flare Mainnet' : `Unsupported chain (${chainId})`}
           </Badge>
         </div>
       )}

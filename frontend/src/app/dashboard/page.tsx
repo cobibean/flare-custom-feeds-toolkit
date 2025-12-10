@@ -12,9 +12,8 @@ export default function DashboardPage() {
   const { feeds, recorders, isLoading } = useFeeds();
   const chainId = useChainId();
 
-  const networkId = chainId === 14 ? 'flare' : 'coston2';
-  const networkFeeds = feeds.filter(f => f.network === networkId);
-  const networkRecorders = recorders.filter(r => r.network === networkId);
+  const networkFeeds = feeds.filter(f => f.network === 'flare');
+  const networkRecorders = recorders.filter(r => r.network === 'flare');
 
   return (
     <div className="min-h-screen">
@@ -35,9 +34,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-display">{networkRecorders.length}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                On {networkId === 'flare' ? 'Mainnet' : 'Coston2'}
-              </p>
+              <p className="text-xs text-muted-foreground mt-1">On Mainnet</p>
             </CardContent>
           </Card>
 
@@ -61,12 +58,10 @@ export default function DashboardPage() {
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Network
               </CardTitle>
-              <div className={`w-2 h-2 rounded-full ${networkId === 'flare' ? 'bg-green-500' : 'bg-yellow-500'}`} />
+              <div className="w-2 h-2 rounded-full bg-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-display">
-                {networkId === 'flare' ? 'Mainnet' : 'Testnet'}
-              </div>
+              <div className="text-3xl font-display">Mainnet</div>
               <p className="text-xs text-muted-foreground mt-1">
                 Chain ID: {chainId}
               </p>
@@ -146,7 +141,7 @@ export default function DashboardPage() {
             <CardHeader>
               <CardTitle>Recent Feeds</CardTitle>
               <CardDescription>
-                Your deployed custom feeds on {networkId === 'flare' ? 'Mainnet' : 'Coston2'}
+                Your deployed custom feeds on Mainnet
               </CardDescription>
             </CardHeader>
             <CardContent>

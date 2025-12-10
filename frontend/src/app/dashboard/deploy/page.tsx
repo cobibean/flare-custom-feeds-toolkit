@@ -41,7 +41,7 @@ export default function DeployPage() {
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
 
-  const networkId: NetworkId = chainId === 14 ? 'flare' : 'coston2';
+  const networkId: NetworkId = 'flare';
   const networkRecorders = recorders.filter(r => r.network === networkId);
 
   // Deploy type selection
@@ -639,7 +639,7 @@ export default function DeployPage() {
         {step === 'select' && !deployType && networkRecorders.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm font-medium">Existing Recorders on {networkId === 'flare' ? 'Mainnet' : 'Coston2'}</CardTitle>
+              <CardTitle className="text-sm font-medium">Existing Recorders on Mainnet</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">

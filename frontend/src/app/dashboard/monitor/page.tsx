@@ -390,7 +390,7 @@ export default function MonitorPage() {
   
   const [updatingFeedId, setUpdatingFeedId] = useState<string | null>(null);
 
-  const networkId: NetworkId = chainId === 14 ? 'flare' : 'coston2';
+  const networkId: NetworkId = 'flare';
   const networkFeeds = feeds.filter(f => f.network === networkId);
   const networkRecorders = recorders.filter(r => r.network === networkId);
 
@@ -444,7 +444,7 @@ export default function MonitorPage() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold">
-              {networkFeeds.length} Feed{networkFeeds.length !== 1 ? 's' : ''} on {networkId === 'flare' ? 'Mainnet' : 'Coston2'}
+              {networkFeeds.length} Feed{networkFeeds.length !== 1 ? 's' : ''} on Mainnet
             </h2>
           </div>
           <Button variant="outline" onClick={refresh}>
