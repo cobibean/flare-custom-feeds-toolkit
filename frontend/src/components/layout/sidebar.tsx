@@ -11,9 +11,11 @@ import {
   Rocket, 
   Activity, 
   Settings, 
-  AlertTriangle 
+  AlertTriangle,
+  ArrowLeft, 
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 const navItems = [
   { href: '/dashboard', label: 'Overview', icon: Home },
@@ -38,7 +40,17 @@ export function Sidebar() {
   return (
     <div className="flex flex-col h-full w-64 bg-card border-r border-border">
       {/* Logo */}
-      <div className="p-4 border-b border-border">
+      <div className="p-4 border-b border-border flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          asChild
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <Link href="/?stay=1" aria-label="Back to landing">
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+        </Button>
         <Link href="/dashboard">
           <Image
             src="/brand/logo.png"
@@ -113,7 +125,7 @@ export function Sidebar() {
                 ? "bg-destructive/10 text-destructive"
                 : "bg-warning/10 text-warning"
             )}>
-              <AlertTriangle className="w-3 h-3 flex-shrink-0" />
+              <AlertTriangle className="w-3 h-3 shrink-0" />
               <span>
                 {isCriticalBalance 
                   ? "Critical: Add FLR to continue"

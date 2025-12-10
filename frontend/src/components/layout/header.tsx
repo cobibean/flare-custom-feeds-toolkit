@@ -1,6 +1,7 @@
 'use client';
 
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+
 import { ThemeToggle } from './theme-toggle';
 
 interface HeaderProps {

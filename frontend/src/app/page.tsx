@@ -3,29 +3,33 @@
 import Image from "next/image";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount } from "wagmi";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Reveal } from "@/components/ui/reveal";
 import { ArrowRight, Zap, Shield, Clock, Coins } from "lucide-react";
 
 export default function LandingPage() {
   const { isConnected } = useAccount();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const stayOnLanding = searchParams.get('stay') === '1';
+  const goToDashboard = () => router.push('/dashboard');
 
   // Redirect to dashboard if connected
   useEffect(() => {
-    if (isConnected) {
+    if (isConnected && !stayOnLanding) {
       router.push('/dashboard');
     }
-  }, [isConnected, router]);
+  }, [isConnected, router, stayOnLanding]);
 
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-950 via-background to-background dark:from-brand-950/30 dark:via-background dark:to-background" />
+        <div className="absolute inset-0 bg-linear-to-br from-brand-950 via-background to-background dark:from-brand-950/30 dark:via-background dark:to-background" />
         
         {/* Grid pattern overlay */}
         <div 
@@ -53,56 +57,73 @@ export default function LandingPage() {
 
           {/* Hero Content */}
           <div className="px-6 py-24 md:py-32 max-w-7xl mx-auto">
-            <div className="max-w-3xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-500 text-sm font-medium mb-6">
+            <Reveal className="max-w-3xl space-y-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-500 text-sm font-medium">
                 <Zap className="w-4 h-4" />
                 Powered by Flare Data Connector
               </div>
               
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-display tracking-tight mb-6">
-                Create Custom{" "}
-                <span className="text-brand-500">Price Feeds</span>{" "}
-                on Flare
-              </h1>
+              <Reveal delay={50}>
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-display tracking-tight">
+                  Create Custom{" "}
+                  <span className="text-brand-500">Price Feeds</span>{" "}
+                  on Flare
+                </h1>
+              </Reveal>
               
-              <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl">
-                Deploy FDC-verified price feeds from any Uniswap V3 pool. 
-                Full sovereignty over your data with on-chain attestation.
-              </p>
+              <Reveal delay={100}>
+                <p className="text-lg md:text-xl text-muted-foreground max-w-2xl">
+                  Deploy FDC-verified price feeds from any Uniswap V3 pool. 
+                  Full sovereignty over your data with on-chain attestation.
+                </p>
+              </Reveal>
 
-              <div className="flex flex-col sm:flex-row gap-4">
-                <ConnectButton.Custom>
-                  {({ openConnectModal, mounted }) => {
-                    const ready = mounted;
-                    return (
-                      <Button
-                        size="lg"
-                        onClick={openConnectModal}
-                        disabled={!ready}
-                        className="bg-brand-500 hover:bg-brand-600 text-white font-semibold px-8 py-6 text-lg"
-                      >
-                        Connect Wallet
-                        <ArrowRight className="ml-2 w-5 h-5" />
-                      </Button>
-                    );
-                  }}
-                </ConnectButton.Custom>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="px-8 py-6 text-lg"
-                  asChild
-                >
-                  <a
-                    href="https://github.com/your-repo/flare-custom-feeds-toolkit"
-                    target="_blank"
-                    rel="noopener noreferrer"
+              <Reveal delay={150}>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  {isConnected ? (
+                    <Button
+                      size="lg"
+                      onClick={goToDashboard}
+                      className="bg-brand-500 hover:bg-brand-600 text-white font-semibold px-8 py-6 text-lg"
+                    >
+                      Go to Dashboard
+                      <ArrowRight className="ml-2 w-5 h-5" />
+                    </Button>
+                  ) : (
+                    <ConnectButton.Custom>
+                      {({ openConnectModal, mounted }) => {
+                        const ready = mounted;
+                        return (
+                          <Button
+                            size="lg"
+                            onClick={openConnectModal}
+                            disabled={!ready}
+                            className="bg-brand-500 hover:bg-brand-600 text-white font-semibold px-8 py-6 text-lg"
+                          >
+                            Connect Wallet
+                            <ArrowRight className="ml-2 w-5 h-5" />
+                          </Button>
+                        );
+                      }}
+                    </ConnectButton.Custom>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="px-8 py-6 text-lg"
+                    asChild
                   >
-                    View on GitHub
-                  </a>
-                </Button>
-              </div>
-            </div>
+                    <a
+                      href="https://github.com/your-repo/flare-custom-feeds-toolkit"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      View on GitHub
+                    </a>
+                  </Button>
+                </div>
+              </Reveal>
+            </Reveal>
           </div>
         </div>
       </div>
@@ -123,35 +144,44 @@ export default function LandingPage() {
                 step: "01",
                 title: "Deploy Recorder",
                 description: "Deploy a PriceRecorder contract to capture pool prices on-chain",
-                icon: "📝",
+                video: "/vid/recorder.mp4",
               },
               {
                 step: "02",
                 title: "Enable Pool",
                 description: "Whitelist your target Uniswap V3 pool for price recording",
-                icon: "✅",
+                video: "/vid/pool.mp4",
               },
               {
                 step: "03",
                 title: "Deploy Feed",
                 description: "Create a CustomFeed contract that implements IICustomFeed",
-                icon: "🚀",
+                video: "/vid/rocket.mp4",
               },
               {
                 step: "04",
                 title: "Run Bot",
                 description: "Start the bot to record prices and submit FDC attestations",
-                icon: "🤖",
+                video: "/vid/robot.mp4",
               },
             ].map((item) => (
               <Card key={item.step} className="relative overflow-hidden group hover:border-brand-500/50 transition-colors">
                 <CardContent className="pt-6">
-                  <div className="text-5xl mb-4">{item.icon}</div>
+                  <div className="w-56 h-56 mx-auto mb-6 rounded-2xl overflow-hidden bg-brand-500/5 shadow-lg shadow-brand-500/10">
+                    <video
+                      src={item.video}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                   <div className="text-brand-500 font-mono text-sm mb-2">{item.step}</div>
                   <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
                   <p className="text-muted-foreground text-sm">{item.description}</p>
                 </CardContent>
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-brand-500 to-brand-400 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-brand-500 to-brand-400 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
               </Card>
             ))}
           </div>
@@ -258,22 +288,33 @@ export default function LandingPage() {
           <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
             Connect your wallet to start deploying custom price feeds on Flare Network
           </p>
-          <ConnectButton.Custom>
-            {({ openConnectModal, mounted }) => {
-              const ready = mounted;
-              return (
-                <Button
-                  size="lg"
-                  onClick={openConnectModal}
-                  disabled={!ready}
-                  className="bg-brand-500 hover:bg-brand-600 text-white font-semibold px-12 py-6 text-lg"
-                >
-                  Get Started
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-              );
-            }}
-          </ConnectButton.Custom>
+          {isConnected ? (
+            <Button
+              size="lg"
+              onClick={goToDashboard}
+              className="bg-brand-500 hover:bg-brand-600 text-white font-semibold px-12 py-6 text-lg"
+            >
+              Go to Dashboard
+              <ArrowRight className="ml-2 w-5 h-5" />
+            </Button>
+          ) : (
+            <ConnectButton.Custom>
+              {({ openConnectModal, mounted }) => {
+                const ready = mounted;
+                return (
+                  <Button
+                    size="lg"
+                    onClick={openConnectModal}
+                    disabled={!ready}
+                    className="bg-brand-500 hover:bg-brand-600 text-white font-semibold px-12 py-6 text-lg"
+                  >
+                    Get Started
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </Button>
+                );
+              }}
+            </ConnectButton.Custom>
+          )}
         </div>
       </section>
 
