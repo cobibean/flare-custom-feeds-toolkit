@@ -1,5 +1,15 @@
-import { http } from 'wagmi';
-import { getDefaultConfig } from '@rainbow-me/rainbowkit';
+import { http, createConfig } from 'wagmi';
+import { 
+  getDefaultWallets,
+  connectorsForWallets 
+} from '@rainbow-me/rainbowkit';
+import {
+  injectedWallet,
+  rabbyWallet,
+  metaMaskWallet,
+  coinbaseWallet,
+  walletConnectWallet,
+} from '@rainbow-me/rainbowkit/wallets';
 import { type Chain } from 'viem';
 
 // Define Flare Mainnet
@@ -29,11 +39,38 @@ export const coston2 = {
   testnet: true,
 } as const satisfies Chain;
 
-// RainbowKit config - no WalletConnect projectId needed for injected wallets
-export const config = getDefaultConfig({
-  appName: 'Flare Custom Feeds',
-  projectId: 'flare-custom-feeds', // Placeholder - WalletConnect optional
-  chains: [flare, coston2],
+const chains = [flare, coston2] as const;
+
+// Custom wallet configuration - prioritizes injected wallets
+// Users with Rabby, MetaMask, or other browser wallets will see them first
+const connectors = connectorsForWallets(
+  [
+    {
+      groupName: 'Installed',
+      wallets: [
+        injectedWallet,    // Detects ANY injected wallet (Rabby, Frame, etc.)
+        rabbyWallet,       // Explicit Rabby support
+        metaMaskWallet,    // MetaMask
+        coinbaseWallet,    // Coinbase Wallet
+      ],
+    },
+    {
+      groupName: 'Other',
+      wallets: [
+        walletConnectWallet, // For mobile wallets (optional)
+      ],
+    },
+  ],
+  {
+    appName: 'Flare Custom Feeds',
+    projectId: 'placeholder', // Only needed for WalletConnect - not required for injected
+  }
+);
+
+// Create wagmi config with custom connectors
+export const config = createConfig({
+  chains,
+  connectors,
   transports: {
     [flare.id]: http(),
     [coston2.id]: http(),
@@ -42,7 +79,7 @@ export const config = getDefaultConfig({
 });
 
 // Export for use in components
-export const supportedChains = [flare, coston2] as const;
+export const supportedChains = chains;
 export type SupportedChainId = typeof flare.id | typeof coston2.id;
 
 export function getChainById(chainId: number): Chain | undefined {
@@ -55,4 +92,3 @@ export function getExplorerUrl(chainId: number, type: 'address' | 'tx', hash: st
   const base = chain.blockExplorers.default.url;
   return type === 'address' ? `${base}/address/${hash}` : `${base}/tx/${hash}`;
 }
-
