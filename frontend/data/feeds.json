@@ -21,6 +21,27 @@
       "invertPrice": false,
       "deployedAt": "2025-12-10T03:02:34.494Z",
       "deployedBy": "0x5d92A2486042Dd4cEE0BD6B5ffd98a8C3A6EA4Fe"
+    },
+    {
+      "id": "1b3a6be2-33a3-4313-9d0d-c5cb1f104440",
+      "alias": "SFLR_FXRP",
+      "network": "flare",
+      "poolAddress": "0x9c0d44d2f6e60a4995153c2d848c113a3bde56e7",
+      "customFeedAddress": "0x9420d16f223e33c8ce14e1878dde744e9eee7c48",
+      "priceRecorderAddress": "0x935dd334dfe9f970eb18a8bc355b059f76890209",
+      "token0": {
+        "address": "0x12e605bc104e93B45e1aD99F9e555f659051c2BB",
+        "symbol": "sFLR",
+        "decimals": 18
+      },
+      "token1": {
+        "address": "0xAd552A648C74D49E10027AB8a618A3ad4901c5bE",
+        "symbol": "FXRP",
+        "decimals": 6
+      },
+      "invertPrice": false,
+      "deployedAt": "2025-12-10T03:55:40.012Z",
+      "deployedBy": "0x5d92A2486042Dd4cEE0BD6B5ffd98a8C3A6EA4Fe"
     }
   ],
   "recorders": [
@@ -38,6 +59,14 @@
       "network": "flare",
       "updateInterval": 300,
       "deployedAt": "2025-12-10T02:52:44.258Z",
+      "deployedBy": "0x5d92A2486042Dd4cEE0BD6B5ffd98a8C3A6EA4Fe"
+    },
+    {
+      "id": "9ead980a-d1bb-404e-9910-8b86587afc27",
+      "address": "0x935dd334dfe9f970eb18a8bc355b059f76890209",
+      "network": "flare",
+      "updateInterval": 300,
+      "deployedAt": "2025-12-10T03:54:50.291Z",
       "deployedBy": "0x5d92A2486042Dd4cEE0BD6B5ffd98a8C3A6EA4Fe"
     }
   ]

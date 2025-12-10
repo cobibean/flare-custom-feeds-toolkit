@@ -1,17 +1,26 @@
 # Flare Custom Feeds Toolkit
 
-> Create FDC-verified custom price feeds from Uniswap V3 pools on Flare
+<p align="center">
+  <strong>Built by <a href="https://flareforward.com">Flare Forward</a></strong>
+</p>
 
-This toolkit enables you to deploy your own custom price feeds on Flare that are verified through the Flare Data Connector (FDC). Your feeds implement the `IICustomFeed` interface for FTSO compatibility.
+> Create your own FDC-verified price feeds from Uniswap V3 pools on Flare — no blockchain experience required!
 
-## Overview
+---
 
-The system works in 4 steps:
+## What is This?
 
-1. **Price Recording** - The `PriceRecorder` contract reads price data from a Uniswap V3 pool and emits a `PriceRecorded` event on-chain
-2. **FDC Attestation** - The bot requests FDC attestation for the price recording transaction
-3. **Proof Retrieval** - After finalization (~90-180s), the bot retrieves the cryptographic proof from the DA Layer
-4. **Feed Update** - The proof is submitted to your `PoolPriceCustomFeed` contract, which verifies it and stores the price
+This toolkit lets you create **custom price feeds** on the Flare Network. Think of it like making your own price oracle for any token pair that has a Uniswap V3 pool.
+
+**Why would you want this?**
+- You need a price feed for a token that isn't covered by Flare's built-in FTSO
+- You're building a DeFi app and need reliable, verified price data
+- You want to experiment with the Flare Data Connector (FDC)
+
+**What makes it special?**
+- All prices are **cryptographically verified** by Flare's FDC — no trust required
+- Works with the standard `IICustomFeed` interface, so it's compatible with FTSO tooling
+- **No command line needed** — deploy everything from a web UI
 
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
@@ -20,264 +29,289 @@ The system works in 4 steps:
 └─────────────────┘     └─────────────────┘     └─────────────────┘     └─────────────────┘
 ```
 
+## 🆘 Need Help? Use the AI Context Files!
+
+This repo includes special documentation files designed for AI coding assistants (Cursor, Claude, ChatGPT, etc.):
+
+| File | What It's For |
+|------|---------------|
+| `CODEBASE_CONTEXT.md` | Technical overview of the entire codebase — give this to your AI agent first |
+| `UIPLAN.md` | Detailed frontend architecture, component specs, and patterns |
+
+**Stuck on something?** Copy the contents of `CODEBASE_CONTEXT.md` into your AI chat and ask your question. The AI will understand the codebase much better with this context.
+
+**Example prompts:**
+- "Here's my codebase context: [paste CODEBASE_CONTEXT.md]. How do I add a new feed to the monitor page?"
+- "Here's my codebase context: [paste]. I'm getting this error: [error]. What's wrong?"
+
+---
+
+## Features
+
+- 🖥️ **Web UI** — Deploy and manage feeds from your browser (no terminal needed!)
+- 🔐 **FDC Verified** — All prices are cryptographically proven
+- 📊 **FTSO Compatible** — Works with standard Flare tooling
+- 🤖 **Automated Updates** — Built-in bot or one-click manual updates
+- 🔧 **Self-Hosted** — Fork it, run it locally, you own everything
+
+---
+
 ## Prerequisites
 
-- Node.js v18+
-- A wallet with FLR tokens (mainnet) or C2FLR (testnet)
-- A Uniswap V3 compatible pool address on Flare
+Before you start, you'll need:
 
-## Quick Start
+1. **Node.js v18 or higher** — [Download here](https://nodejs.org/)
+   - Not sure if you have it? Run `node --version` in your terminal
+   
+2. **A wallet with FLR tokens** 
+   - For testing: Use [Coston2 testnet](https://faucet.flare.network/) (free tokens!)
+   - For production: You'll need real FLR on mainnet
+   
+3. **A Uniswap V3 pool address** on Flare
+   - This is the trading pair you want to create a price feed for
+   - You can find pools on [SparkDEX](https://sparkdex.ai/) or similar DEXes on Flare
 
-### 1. Clone and Install
+---
+
+## Quick Start (5 Minutes)
+
+### Step 1: Get the Code
 
 ```bash
-# Clone the toolkit
+# Clone this repository
 git clone https://github.com/your-org/flare-custom-feeds-toolkit.git
-cd flare-custom-feeds-toolkit
 
-# Install dependencies
+# Go into the frontend folder
+cd flare-custom-feeds-toolkit/frontend
+
+# Install dependencies (this might take a minute)
 npm install
-
-# Copy environment template
-cp .env.example .env
 ```
 
-### 2. Configure Environment
-
-Edit `.env` with your values:
+### Step 2: Start the App
 
 ```bash
-# Your wallet private key (KEEP SECRET!)
-DEPLOYER_PRIVATE_KEY=0xYourPrivateKeyHere
-
-# Network RPC (default is public endpoint)
-FLARE_RPC_URL=https://flare-api.flare.network/ext/bc/C/rpc
+npm run dev
 ```
 
-### 3. Deploy PriceRecorder
-
-```bash
-npm run deploy:recorder
+You should see something like:
+```
+▲ Next.js 15.x
+- Local: http://localhost:3000
 ```
 
-This deploys the `PriceRecorder` contract. Copy the address to your `.env`:
+### Step 3: Open in Browser
 
-```bash
-PRICE_RECORDER_ADDRESS=0xYourDeployedAddress
+Go to [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Step 4: Connect Your Wallet
+
+1. Click **"Connect Wallet"** in the top right
+2. Choose MetaMask (or Rabby, Coinbase Wallet, etc.)
+3. Switch to **Coston2** (testnet) or **Flare Mainnet**
+
+### Step 5: Deploy Your First Feed
+
+1. Go to **Deploy** in the sidebar
+2. Click **"Deploy Price Recorder"** — this is a shared contract that records prices
+3. Once that's done, click **"Deploy Custom Feed"**
+4. Paste your V3 pool address — the app will auto-detect the tokens!
+5. Click **Deploy** and confirm the transaction in your wallet
+
+### Step 6: Update Your Feed
+
+1. Go to **Monitor** in the sidebar
+2. Find your feed and click **"Update Feed"**
+3. The app will guide you through the FDC attestation process (~2 minutes)
+4. Done! Your feed now has a verified price
+
+---
+
+## How It Works (Simple Version)
+
+```
+Your V3 Pool → Records Price → FDC Verifies It → Your Feed Stores It
+     📊              📝              ✅                💾
 ```
 
-### 4. Enable Your Pool
+1. **Record**: The app reads the current price from a Uniswap V3 pool
+2. **Attest**: Flare's FDC system cryptographically proves the price is real
+3. **Store**: The verified price is saved to your custom feed contract
+4. **Use**: Anyone can read your feed — it's public and trustless!
 
-```bash
-POOL_ADDRESS=0xYourV3PoolAddress npm run enable:pool
+---
+
+## Using Your Feed in Your App
+
+Once your feed is live, here's how to read from it:
+
+### In Solidity (Smart Contracts)
+
+```solidity
+interface ICustomFeed {
+    function read() external view returns (uint256);
+}
+
+contract MyApp {
+    ICustomFeed public priceFeed;
+    
+    constructor(address feedAddress) {
+        priceFeed = ICustomFeed(feedAddress);
+    }
+    
+    function getPrice() public view returns (uint256) {
+        // Returns price with 6 decimals
+        // e.g., 1234567 = $1.234567
+        return priceFeed.read();
+    }
+}
 ```
 
-### 5. Deploy Custom Feed
+### In JavaScript/TypeScript
 
-```bash
-# Set your pool configuration
-POOL_ADDRESS_MYFEED=0xYourV3PoolAddress
+```javascript
+import { createPublicClient, http } from 'viem';
+import { flare } from 'viem/chains';
 
-# Deploy the feed
-FEED_ALIAS=MYFEED npm run deploy:feed
+const client = createPublicClient({ 
+  chain: flare, 
+  transport: http() 
+});
+
+const price = await client.readContract({
+  address: '0xYourFeedAddress', // Replace with your feed address
+  abi: [{ 
+    name: 'read', 
+    type: 'function', 
+    inputs: [], 
+    outputs: [{ type: 'uint256' }] 
+  }],
+  functionName: 'read',
+});
+
+// Divide by 10^6 to get human-readable price
+console.log('Price:', Number(price) / 1_000_000);
 ```
 
-Copy the feed address to your `.env`:
+---
+
+## Costs
+
+Each price update costs approximately **1.01 FLR**:
+
+| What | Cost |
+|------|------|
+| Recording the price | ~0.002 FLR (gas) |
+| FDC attestation fee | ~1.0 FLR (fixed) |
+| Storing the proof | ~0.004 FLR (gas) |
+| **Total** | **~1.01 FLR** |
+
+**Monthly estimates** (if updating every 5 minutes):
+- 1 feed: ~8,700 FLR/month
+- 5 feeds: ~43,500 FLR/month
+
+---
+
+## Keeping Your Feed Updated
+
+### Option A: Manual Updates (Good for Testing)
+
+Just click "Update Feed" in the Monitor page whenever you want fresh data.
+
+### Option B: Automated Bot (Good for Production)
+
+1. Go to **Settings** in the dashboard
+2. Click **"Export Bot Config"**
+3. Copy the generated `.env` variables to your root `.env` file
+4. Run the bot:
 
 ```bash
-CUSTOM_FEED_ADDRESS_MYFEED=0xYourFeedAddress
-```
-
-### 6. Start the Bot
-
-```bash
+# From the root directory (not frontend)
+cd ..
+npm install
 npm run bot:start
 ```
 
-The bot will automatically:
-- Record prices every 5 minutes (configurable)
-- Request FDC attestations
-- Submit verified proofs to your feed
+The bot will automatically update your feeds every few minutes.
 
-## Contracts
+---
 
-### PriceRecorder.sol
+## Testing on Testnet First (Recommended!)
 
-Records prices from Uniswap V3 pools on-chain. Emits `PriceRecorded` events that can be attested by the FDC.
+Before spending real FLR, test everything on Coston2:
 
-**Key Functions:**
-- `recordPrice(address pool)` - Record current price from a pool
-- `enablePool(address pool)` - Enable a new pool (owner only)
-- `canUpdate(address pool)` - Check if pool can be updated now
+1. Get free testnet tokens: [Flare Faucet](https://faucet.flare.network)
+2. Switch to Coston2 in the app (top left network switcher)
+3. Deploy and test your feed
+4. When ready, switch to Mainnet and redeploy
 
-### PoolPriceCustomFeed.sol
-
-FDC-verified custom feed that implements `IICustomFeed` for FTSO compatibility.
-
-**Key Functions:**
-- `updateFromProof(Proof calldata)` - Update feed with FDC proof
-- `read()` - Get latest verified price
-- `feedId()` - Get unique feed identifier (starts with 0x21)
-- `getCurrentFeed()` - Get price, decimals, and timestamp
-
-## Configuration
-
-### Pool Configuration
-
-For each pool, add two environment variables:
-
-```bash
-# Pool address
-POOL_ADDRESS_<ALIAS>=0x...
-
-# Feed address (after deployment)
-CUSTOM_FEED_ADDRESS_<ALIAS>=0x...
-```
-
-Example:
-```bash
-POOL_ADDRESS_FXRP_USDTO=0x0b40111b4cf6dd1001f36f9c631956fefa56bc3b
-CUSTOM_FEED_ADDRESS_FXRP_USDTO=0xYourFeedAddress
-```
-
-### Bot Settings
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `BOT_CHECK_INTERVAL_SECONDS` | 60 | How often to check pools |
-| `BOT_STATS_INTERVAL_MINUTES` | 60 | Stats print frequency |
-| `BOT_LOG_LEVEL` | compact | `compact` or `verbose` |
-| `BOT_LOG_FILE_ENABLED` | true | Enable JSON file logging |
-| `BOT_LOG_FILE_DIR` | ./logs | Log file directory |
-
-### Price Inversion
-
-By default, prices are calculated as token1/token0 (standard V3 convention). If you need the inverse:
-
-```bash
-INVERT_PRICE=true
-```
-
-## Cost Analysis
-
-Approximate costs per price update on Flare mainnet:
-
-| Operation | Gas | Cost (at 25 gwei) |
-|-----------|-----|-------------------|
-| recordPrice() | ~80,000 | ~0.002 FLR |
-| FDC Attestation | - | ~1.0 FLR |
-| updateFromProof() | ~150,000 | ~0.004 FLR |
-| **Total per update** | - | **~1.01 FLR** |
-
-Monthly costs (5-minute intervals):
-- **1 pool**: ~8,640 updates × 1.01 FLR ≈ **8,726 FLR/month**
-- **5 pools**: ~43,200 updates × 1.01 FLR ≈ **43,632 FLR/month**
-
-## Scripts
-
-| Command | Description |
-|---------|-------------|
-| `npm run compile` | Compile contracts |
-| `npm run deploy:recorder` | Deploy PriceRecorder |
-| `npm run deploy:feed` | Deploy PoolPriceCustomFeed |
-| `npm run enable:pool` | Enable a pool on PriceRecorder |
-| `npm run bot:start` | Start the combined bot |
-| `npm run test:record` | Test price recording |
-| `npm run test:feed` | Test feed read functions |
-| `npm run clean` | Remove build artifacts |
-
-## Architecture
-
-```
-flare-custom-feeds-toolkit/
-├── contracts/
-│   ├── PriceRecorder.sol      # Records V3 pool prices
-│   └── PoolPriceCustomFeed.sol # FDC-verified custom feed
-├── scripts/
-│   ├── deploy-price-recorder.js
-│   ├── deploy-custom-feed.js
-│   ├── enable-pool.js
-│   ├── test-record-price.js
-│   └── test-feed-read.js
-├── src/
-│   ├── fdc-client.js          # FDC API interactions
-│   └── custom-feeds-bot.js    # Combined recording + attestation bot
-├── artifacts/                  # Pre-compiled ABIs
-│   ├── PriceRecorder.json
-│   └── PoolPriceCustomFeed.json
-├── logs/                       # Bot JSON logs
-├── hardhat.config.cjs
-├── package.json
-├── .env.example
-└── README.md
-```
+---
 
 ## Troubleshooting
 
 ### "Pool not enabled"
-
-Run the enable-pool script:
-```bash
-POOL_ADDRESS=0x... npm run enable:pool
-```
+The app will prompt you to enable the pool — just confirm the transaction.
 
 ### "Update interval not elapsed"
-
-The PriceRecorder has a minimum interval between updates (default: 5 minutes). Wait for the interval to pass or adjust `UPDATE_INTERVAL` before deployment.
-
-### "Attestation did not finalize in time"
-
-FDC attestations typically take 90-180 seconds. If consistently failing:
-- Check your RPC connection
-- Verify the FDC system is operational
-- Increase the timeout in the bot configuration
-
-### "Invalid FDC proof"
-
-The proof must come from a transaction on the same chain where the feed is deployed. Ensure:
-- `PriceRecorder` and `PoolPriceCustomFeed` are on the same network
-- The proof was retrieved from the correct voting round
+You need to wait 5 minutes between updates. This is to prevent spam.
 
 ### "Low balance" warning
+You need FLR for gas + attestation fees. Get testnet tokens from the [faucet](https://faucet.flare.network) or buy FLR for mainnet.
 
-The bot monitors your wallet balance and will stop if it drops too low. Ensure you have sufficient FLR for:
-- Gas costs (~0.01 FLR per cycle)
-- FDC attestation fees (~1 FLR per attestation)
+### "Attestation taking forever"
+FDC attestations take 90-180 seconds. The progress bar shows you where you are. If it's stuck, check your internet connection.
 
-## Testing on Coston2 (Testnet)
+### Something else broken?
+1. Check the browser console (F12 → Console tab) for errors
+2. Copy `CODEBASE_CONTEXT.md` into your AI assistant and describe the problem
+3. Open an issue on GitHub
 
-To test before mainnet deployment:
+---
 
-1. Get testnet tokens from the [Flare Faucet](https://faucet.flare.network)
+## Project Structure
 
-2. Update `.env`:
-```bash
-FLARE_RPC_URL=https://coston2-api.flare.network/ext/bc/C/rpc
+```
+flare-custom-feeds-toolkit/
+├── frontend/                  # 👈 The web app (you'll mostly work here)
+│   ├── src/app/              # Pages
+│   ├── src/components/       # UI components
+│   └── data/feeds.json       # Your deployed feeds (local storage)
+├── contracts/                 # Solidity smart contracts
+├── src/                       # Bot code (for automated updates)
+├── CODEBASE_CONTEXT.md       # 🤖 Give this to your AI assistant
+├── UIPLAN.md                 # 🤖 Detailed frontend architecture
+└── README.md                 # You are here!
 ```
 
-3. Deploy with network flag:
-```bash
-npx hardhat run scripts/deploy-price-recorder.js --network coston2
-```
+---
 
-## Security Considerations
+## For Developers & AI Agents
 
-- **Private Key**: Never commit your private key. Use environment variables or secure key management.
-- **FDC Proofs**: All prices are cryptographically verified by the Flare Data Connector.
-- **Ownership**: Contracts have owner-only admin functions. Consider a multisig for production.
-- **Monitoring**: Enable JSON logging and set up alerts for failures.
+This codebase is designed to be AI-friendly:
+
+- **`CODEBASE_CONTEXT.md`** — Start here. Technical overview of contracts, data flow, and architecture.
+- **`UIPLAN.md`** — Deep dive into the frontend: components, hooks, patterns, and implementation details.
+
+If you're using Cursor, Claude, or another AI coding assistant, feed it these files for better help.
+
+---
+
+## Links
+
+- **Flare Forward**: [flareforward.com](https://flareforward.com)
+- **Flare Docs**: [docs.flare.network](https://docs.flare.network)
+- **FDC Docs**: [docs.flare.network/tech/fdc](https://docs.flare.network/tech/fdc/)
+- **Flare Discord**: [discord.flare.network](https://discord.flare.network)
+- **Testnet Faucet**: [faucet.flare.network](https://faucet.flare.network)
+
+---
 
 ## License
 
-MIT
+MIT — do whatever you want with it!
 
-## Contributing
+---
 
-Contributions welcome! Please open an issue or PR on GitHub.
-
-## Support
-
-- [Flare Documentation](https://docs.flare.network)
-- [FDC Documentation](https://docs.flare.network/tech/fdc/)
-- [Flare Discord](https://discord.flare.network)
-
+<p align="center">
+  <strong>Built with 💖 by <a href="https://flareforward.com">Flare Forward</a></strong>
+</p>

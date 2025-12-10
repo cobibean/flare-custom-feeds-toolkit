@@ -4,7 +4,7 @@
 
 ## Purpose
 
-Creates FDC-verified custom price feeds from Uniswap V3 pools on Flare. Implements `IICustomFeed` interface for FTSO compatibility.
+Creates FDC-verified custom price feeds from Uniswap V3 pools on Flare. Implements `IICustomFeed` interface for FTSO compatibility. Includes both CLI tools and a web-based UI for deployment and management.
 
 ## Data Flow
 
@@ -12,26 +12,54 @@ Creates FDC-verified custom price feeds from Uniswap V3 pools on Flare. Implemen
 V3Pool.slot0() → PriceRecorder.recordPrice() → FDC attestation → CustomFeed.updateFromProof()
 ```
 
-1. Bot calls `recordPrice(pool)` → emits `PriceRecorded` event
-2. Bot requests FDC attestation via FdcHub (pays ~1 FLR fee)
-3. After ~90-180s finalization, bot retrieves proof from DA Layer
-4. Bot submits proof to `CustomFeed.updateFromProof()` → stores verified price
+1. User/Bot calls `recordPrice(pool)` → emits `PriceRecorded` event
+2. FDC attestation requested via FdcHub (pays ~1 FLR fee)
+3. After ~90-180s finalization, proof retrieved from DA Layer
+4. Proof submitted to `CustomFeed.updateFromProof()` → stores verified price
 
 ## File Structure
 
 ```
-contracts/
-├── PriceRecorder.sol      # Shared recorder (one per project)
-└── PoolPriceCustomFeed.sol # Feed contract (one per pool)
-scripts/
-├── deploy-price-recorder.js
-├── deploy-custom-feed.js
-├── enable-pool.js
-├── test-record-price.js
-└── test-feed-read.js
-src/
-├── custom-feeds-bot.js    # Main bot (recording + attestation)
-└── fdc-client.js          # FDC API wrapper
+flare-custom-feeds-toolkit/
+├── contracts/
+│   ├── PriceRecorder.sol          # Shared recorder (one per project)
+│   └── PoolPriceCustomFeed.sol    # Feed contract (one per pool)
+├── scripts/                        # CLI deployment scripts (hardhat)
+│   ├── deploy-price-recorder.js
+│   ├── deploy-custom-feed.js
+│   ├── enable-pool.js
+│   ├── test-record-price.js
+│   └── test-feed-read.js
+├── src/                            # Node.js bot (standalone)
+│   ├── custom-feeds-bot.js        # Main bot (recording + attestation)
+│   └── fdc-client.js              # FDC API wrapper
+├── frontend/                       # Next.js web UI
+│   ├── data/feeds.json            # Local storage for deployed feeds
+│   ├── public/brand/              # Flare Forward brand assets
+│   ├── src/
+│   │   ├── app/                   # Next.js App Router pages
+│   │   │   ├── page.tsx           # Landing page
+│   │   │   ├── dashboard/         # Protected dashboard routes
+│   │   │   │   ├── deploy/        # Deploy contracts via UI
+│   │   │   │   ├── monitor/       # Monitor deployed feeds
+│   │   │   │   └── settings/      # Bot config export
+│   │   │   └── api/               # API routes
+│   │   │       ├── feeds/         # CRUD for feeds.json
+│   │   │       └── fdc/           # FDC API proxy (CORS bypass)
+│   │   ├── components/            # React components
+│   │   ├── hooks/                 # Custom React hooks
+│   │   │   ├── use-pool-info.ts   # Auto-detect V3 pool info
+│   │   │   └── use-feed-updater.ts # FDC attestation workflow
+│   │   ├── lib/
+│   │   │   ├── artifacts/         # Bundled contract ABIs + bytecode
+│   │   │   ├── contracts.ts       # Contract interface definitions
+│   │   │   ├── wagmi-config.ts    # Wallet configuration
+│   │   │   └── types.ts           # TypeScript interfaces
+│   │   └── context/               # React Context providers
+│   └── package.json
+├── CODEBASE_CONTEXT.md            # This file
+├── UIPLAN.md                      # Detailed UI architecture (agent context)
+└── README.md                      # User documentation
 ```
 
 ## Smart Contracts
@@ -102,16 +130,84 @@ function updateFromProof(IEVMTransaction.Proof calldata _proof) external;
 // If invertPrice: price = 10^12 / price
 ```
 
+## Frontend Architecture
+
+### Key Technologies
+- **Next.js 14** (App Router) - React framework with SSR
+- **RainbowKit + wagmi + viem** - Wallet connection (no API keys needed for injected wallets)
+- **shadcn/ui + Tailwind CSS** - UI components
+- **Local JSON storage** - `frontend/data/feeds.json` for persistence
+
+### Contract Integration
+
+The frontend bundles pre-compiled contract artifacts:
+
+```typescript
+// frontend/src/lib/artifacts/
+├── PriceRecorder.ts      // ABI + bytecode
+├── PoolPriceCustomFeed.ts // ABI + bytecode
+└── index.ts              // Exports
+```
+
+Users deploy contracts directly from the browser - no CLI or hardhat needed.
+
+### FDC Integration
+
+The frontend can trigger FDC attestations via:
+
+```typescript
+// frontend/src/hooks/use-feed-updater.ts
+
+// Full workflow:
+1. recordPrice(pool) - emit PriceRecorded event
+2. POST /api/fdc/prepare-request - get attestation request (proxied)
+3. fdcHub.requestAttestation() - pay fee, submit to FDC
+4. Wait for finalization (~90-180s)
+5. POST /api/fdc/get-proof - retrieve proof from DA Layer (proxied)
+6. customFeed.updateFromProof(proof) - update feed with verified price
+```
+
+The API routes proxy FDC calls to bypass CORS restrictions.
+
+### Data Storage Schema
+
+```json
+// frontend/data/feeds.json
+{
+  "version": "1.0.0",
+  "feeds": [{
+    "id": "uuid",
+    "alias": "FXRP_USDTO",
+    "network": "flare",
+    "poolAddress": "0x...",
+    "customFeedAddress": "0x...",
+    "priceRecorderAddress": "0x...",
+    "token0Decimals": 18,
+    "token1Decimals": 6,
+    "invertPrice": false,
+    "deployedAt": "2025-12-09T12:00:00.000Z",
+    "deployedBy": "0x..."
+  }],
+  "recorders": [{
+    "id": "uuid",
+    "address": "0x...",
+    "network": "flare",
+    "updateInterval": 300,
+    "deployedAt": "...",
+    "deployedBy": "0x..."
+  }]
+}
+```
+
 ## Bot (custom-feeds-bot.js)
 
-Single process handling both recording and attestation.
+Standalone Node.js process for automated feed updates.
 
 ### Configuration Discovery
 
 ```javascript
 // Auto-discovers pools from env vars matching pattern:
 // POOL_ADDRESS_<ALIAS> + CUSTOM_FEED_ADDRESS_<ALIAS>
-// Example: POOL_ADDRESS_FXRP_USDTO, CUSTOM_FEED_ADDRESS_FXRP_USDTO
 ```
 
 ### Main Loop
@@ -134,7 +230,6 @@ CHECK_INTERVAL: 60s        // Main loop frequency
 MAX_GAS_PRICE_GWEI: 100
 MIN_BALANCE_FLR: 1.0
 CRITICAL_BALANCE_FLR: 0.1  // Bot stops below this
-MAX_ATTESTATION_RETRIES: 2
 ```
 
 ## FDC Client (fdc-client.js)
@@ -149,26 +244,6 @@ RELAY = "0x57a4c3676d08Aa5d15410b5A6A80fBcEF72f3F45";
 CONTRACT_REGISTRY = "0xaD67FE66660Fb8dFE9d6b1b4240d8650e30F6019";
 DA_LAYER_API = "https://flr-data-availability.flare.network";
 VERIFIER_URL = "https://fdc-verifiers-mainnet.flare.network/verifier/flr/EVMTransaction/prepareRequest";
-```
-
-### Workflow
-
-```javascript
-async function getProofForTransaction(provider, wallet, txHash) {
-  // 1. Prepare request via verifier (gets MIC)
-  requestBytes = await prepareAttestationRequest(txHash);
-  
-  // 2. Submit to FdcHub with fee
-  await fdcHub.requestAttestation(requestBytes, { value: fee });
-  votingRoundId = await relay.getVotingRoundId(blockTimestamp);
-  
-  // 3. Wait for finalization (~90-180s)
-  await waitForFinalization(votingRoundId);
-  
-  // 4. Retrieve proof from DA Layer
-  proof = await retrieveProof(votingRoundId, requestBytes);
-  return { responseHex, merkleProof, fdcRoundId };
-}
 ```
 
 ### Attestation Request Format
@@ -190,7 +265,7 @@ async function getProofForTransaction(provider, wallet, txHash) {
 ## Environment Variables
 
 ```bash
-# Required
+# Required for bot/CLI
 DEPLOYER_PRIVATE_KEY=0x...
 PRICE_RECORDER_ADDRESS=0x...
 
@@ -201,17 +276,7 @@ CUSTOM_FEED_ADDRESS_<ALIAS>=0x...
 # Optional
 FLARE_RPC_URL=https://flare-api.flare.network/ext/bc/C/rpc
 BOT_CHECK_INTERVAL_SECONDS=60
-BOT_LOG_LEVEL=compact|verbose
-BOT_LOG_FILE_ENABLED=true
-INVERT_PRICE=true|false
 ```
-
-## Deployment Sequence
-
-1. `npm run deploy:recorder` → Get PRICE_RECORDER_ADDRESS
-2. `POOL_ADDRESS=0x... npm run enable:pool`
-3. `FEED_ALIAS=XXX npm run deploy:feed` → Get CUSTOM_FEED_ADDRESS_XXX
-4. `npm run bot:start`
 
 ## Networks
 
@@ -252,14 +317,47 @@ if (invertPrice) price = (10n ** 12n) / price;
 }
 ```
 
+## Commands
+
+### Frontend (Web UI)
+```bash
+cd frontend
+npm install
+npm run dev      # Start development server at localhost:3000
+```
+
+### CLI (Hardhat scripts)
+```bash
+npm install
+npm run compile
+npm run deploy:recorder
+npm run deploy:feed
+npm run enable:pool
+npm run bot:start
+```
+
 ## Dependencies
 
+### Root (Bot/CLI)
 ```json
 {
   "axios": "^1.6.0",
   "dotenv": "^16.3.0",
   "ethers": "^6.9.0",
   "hardhat": "^2.19.0"
+}
+```
+
+### Frontend
+```json
+{
+  "next": "15.x",
+  "@rainbow-me/rainbowkit": "^2.x",
+  "wagmi": "^2.x",
+  "viem": "^2.x",
+  "@tanstack/react-query": "^5.x",
+  "tailwindcss": "^3.x",
+  "zod": "^3.x"
 }
 ```
 
@@ -271,4 +369,11 @@ if (invertPrice) price = (10n ** 12n) / price;
 - Feed ID format: 0x21 + UTF-8 name bytes (max 20 chars)
 - FDC attestation type ID: 200 (EVMTransaction)
 - All contracts have owner-only admin functions
+- Frontend uses Next.js App Router with React Server Components
+- Contract artifacts are bundled - users don't need to compile
+- FDC API calls are proxied through Next.js API routes to bypass CORS
 
+## Related Files
+
+- `UIPLAN.md` - Detailed UI architecture, component specs, and implementation patterns
+- `README.md` - User-facing documentation and setup guide
