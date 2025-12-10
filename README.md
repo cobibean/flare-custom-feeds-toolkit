@@ -29,14 +29,13 @@ This toolkit lets you create **custom price feeds** on the Flare Network. Think 
 └─────────────────┘     └─────────────────┘     └─────────────────┘     └─────────────────┘
 ```
 
-## 🆘 Need Help? Use the AI Context Files!
+## 🆘 Need Help? Use the AI Context File!
 
-This repo includes special documentation files designed for AI coding assistants (Cursor, Claude, ChatGPT, etc.):
+This repo includes a special documentation file designed for AI coding assistants (Cursor, Claude, ChatGPT, etc.):
 
 | File | What It's For |
 |------|---------------|
 | `CODEBASE_CONTEXT.md` | Technical overview of the entire codebase — give this to your AI agent first |
-| `UIPLAN.md` | Detailed frontend architecture, component specs, and patterns |
 
 **Stuck on something?** Copy the contents of `CODEBASE_CONTEXT.md` into your AI chat and ask your question. The AI will understand the codebase much better with this context.
 
@@ -79,7 +78,7 @@ Before you start, you'll need:
 
 ```bash
 # Clone this repository
-git clone https://github.com/your-org/flare-custom-feeds-toolkit.git
+git clone https://github.com/cobibean/flare-custom-feeds-toolkit.git
 
 # Go into the frontend folder
 cd flare-custom-feeds-toolkit/frontend
@@ -279,7 +278,6 @@ flare-custom-feeds-toolkit/
 ├── contracts/                 # Solidity smart contracts
 ├── src/                       # Bot code (for automated updates)
 ├── CODEBASE_CONTEXT.md       # 🤖 Give this to your AI assistant
-├── UIPLAN.md                 # 🤖 Detailed frontend architecture
 └── README.md                 # You are here!
 ```
 
@@ -289,10 +287,7 @@ flare-custom-feeds-toolkit/
 
 This codebase is designed to be AI-friendly:
 
-- **`CODEBASE_CONTEXT.md`** — Start here. Technical overview of contracts, data flow, and architecture.
-- **`UIPLAN.md`** — Deep dive into the frontend: components, hooks, patterns, and implementation details.
-
-If you're using Cursor, Claude, or another AI coding assistant, feed it these files for better help.
+- **`CODEBASE_CONTEXT.md`** — Technical overview of contracts, data flow, and architecture. Feed this to your AI assistant for better help.
 
 ---
 

@@ -38,7 +38,8 @@ deployments/*.json
 *.tsbuildinfo
 .cache
 
-# UI Plan is now public as agent context (UIPLAN.md kept in repo)
+# UI Plan (internal development notes, not for public repo)
+UIPLAN.md
 
 # Brand kit source files (keep processed assets in frontend/public/brand/)
 brandkit/
